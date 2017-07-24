@@ -19,9 +19,11 @@ namespace System
             // 3) Determine operator. !=, >, <, ==, etc. Should be able to use expression.NodeType for most.
             // 4) compare left to right
             // 5) build exception if condition not met
-            // 5.1) 
+            // 5.1) Globalization and localization should be present. 
+            //      https://docs.microsoft.com/en-us/aspnet/core/fundamentals/localization
+            // 5.2)
 
-
+            System.Linq.Expressions.DynamicExpressionVisitor
         }
     }
 }
