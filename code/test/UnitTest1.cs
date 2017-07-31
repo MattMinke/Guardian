@@ -1,7 +1,7 @@
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Dynamic;
-
+using Guardian;
 namespace test
 {
     [TestClass]
@@ -15,17 +15,18 @@ namespace test
             dynamic expando = new ExpandoObject();
             expando.Job = null;
 
-            System.Guard.Requires(() => !String.IsNullOrEmpty(name));
-
-            System.Guard.Requires(() => !String.IsNullOrWhiteSpace(name));
-
-            System.Guard.Requires(() => name != null && age > 20 && age < 120 );
-
-            System.Guard.Requires(() => null != name);
-
-            System.Guard.Requires(() => name != null);
-
             
+            Guard.Requires(() => !String.IsNullOrEmpty(name));
+
+            Guard.Requires(() => !String.IsNullOrWhiteSpace(name));
+
+            Guard.Requires(() => name != null && age > 20 && age < 120 );
+
+            Guard.Requires(() => null != name);
+
+            Guard.Requires(() => name != null);
+
+            Guard.Requires(() => name == null && (age > 20 || age < 20));
         }
     }
 }

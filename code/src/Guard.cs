@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace System
+namespace Guardian
 {
     public static class Guard
     {
@@ -23,7 +23,7 @@ namespace System
             //      https://docs.microsoft.com/en-us/aspnet/core/fundamentals/localization
             // 5.2)
 
-            System.Linq.Expressions.DynamicExpressionVisitor
+            
         }
     }
 }
