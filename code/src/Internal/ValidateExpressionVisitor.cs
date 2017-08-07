@@ -11,14 +11,23 @@ namespace Guardian.Internal
     public class ValidateExpressionVisitor : ExpressionVisitor
     {
 
-        private readonly Stack<object> state = new Stack<object>();
-        private readonly Stack<object> errors = new Stack<object>();
+        private readonly Stack<object> _state;
+        private readonly Stack<object> _errors;
         bool starting = true;
         private Expression entryPoint;
+        private readonly IComparerFactory _factory;
+
+        public ValidateExpressionVisitor(IComparerFactory factory)
+        {
+            _factory = factory;
+            _state = new Stack<object>();
+            _errors = new Stack<object>();
+        }
+
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
-            state.Push(node.Value);
+            _state.Push(node.Value);
             return base.VisitConstant(node);
         }
 
@@ -26,9 +35,9 @@ namespace Guardian.Internal
         {
             Visit(node.Object);
             object target = null;
-            if (state.Any())
+            if (_state.Any())
             {
-                target = state.Pop();
+                target = _state.Pop();
             }
 
             object[] parameters = new object[node.Arguments.Count];
@@ -36,16 +45,16 @@ namespace Guardian.Internal
             foreach (var expression in node.Arguments)
             {
                 Visit(expression);
-                parameters[index] = state.Pop();
+                parameters[index] = _state.Pop();
                 index++;
             }
-            
+
             var value = node.Method.Invoke(target, parameters);
-            state.Push(value);
+            _state.Push(value);
             if (node == entryPoint && !(bool)value)
             {
                 //error
-                errors.Push("TODO: create a error object that can be used to create a message from later.");
+                _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
 
             return node;
@@ -55,22 +64,22 @@ namespace Guardian.Internal
         {
             var expression = base.VisitUnary(node);
 
-            var success = !(bool)state.Pop();
+            var success = !(bool)_state.Pop();
 
             if (success)
             {
                 // the error reported was invalid.
-                if (errors.Any())
+                if (_errors.Any())
                 {
-                    errors.Pop();
+                    _errors.Pop();
                 }
             }
             else
             {
                 //error
-                errors.Push("TODO: create a error object that can be used to create a message from later.");
+                _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
-            state.Push(success);
+            _state.Push(success);
 
             return expression;
         }
@@ -79,22 +88,18 @@ namespace Guardian.Internal
         {
             var expression = base.VisitBinary(node);
 
-            var right = state.Pop();
-            var left = state.Pop();
+            var right = _state.Pop();
+            var left = _state.Pop();
 
             switch (node.NodeType)
             {
                 case ExpressionType.ArrayIndex:
-                    state.Push(((Array)left).GetValue((int)right));
+                    _state.Push(((Array)left).GetValue((int)right));
                     return expression;
                     break;
             }
 
-            //TODO: create factory.
-            //IComparer comparer = comparerFactory.GetComparer(left.GetType());
-            IComparer comparer = typeof(Comparer<>).MakeGenericType((left ?? right).GetType())
-                .GetProperty("Default")
-                .GetValue(null) as IComparer;
+            IComparer comparer = _factory.GetComparer((left ?? right).GetType());
 
             bool success = false;
             switch (node.NodeType)
@@ -136,9 +141,9 @@ namespace Guardian.Internal
 
             if (!success)
             {
-                errors.Push("TODO: create a error object that can be used to create a message from later.");
+                _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
-            state.Push(success);
+            _state.Push(success);
             return expression;
         }
 
@@ -148,7 +153,7 @@ namespace Guardian.Internal
 
             var expression = base.VisitMember(node);
 
-            var target = state.Pop();
+            var target = _state.Pop();
 
             object value = null;
             switch (node.Member.MemberType)
@@ -167,7 +172,7 @@ namespace Guardian.Internal
                     throw new NotSupportedException($"Member of type {node.Member.MemberType} is not supported");
             }
 
-            state.Push(value);
+            _state.Push(value);
 
             return expression;
         }
@@ -201,8 +206,14 @@ namespace Guardian.Internal
             if (exiting)
             {
                 starting = true;
+                entryPoint = null;
             }
             return expression;
+        }
+        protected override Expression VisitLambda<T>(Expression<T> node)
+        {
+            _state.Push(((LambdaExpression)node).Compile());
+            return node;
         }
 
         protected override Expression VisitBlock(BlockExpression node)
@@ -244,11 +255,6 @@ namespace Guardian.Internal
         protected override LabelTarget VisitLabelTarget(LabelTarget node)
         {
             return base.VisitLabelTarget(node);
-        }
-        protected override Expression VisitLambda<T>(Expression<T> node)
-        {
-            state.Push(((LambdaExpression)node).Compile());
-            return node;
         }
         protected override Expression VisitTypeBinary(TypeBinaryExpression node)
         {

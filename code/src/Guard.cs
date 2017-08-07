@@ -10,8 +10,12 @@ namespace Guardian
     {
         public static void Requires(Expression<Func<bool>> expression)
         {
+            //TODO: need to introduce DI/IoC.
+            //
             //var value = Utilities.GetValue(expression);
-            ValidateExpressionVisitor visitor = new ValidateExpressionVisitor();
+            ValidateExpressionVisitor visitor = new ValidateExpressionVisitor(
+                new ReflectiveDefaultComparerFactory()
+            );
             var rewritten = visitor.Visit(expression.Body);
             // TODO: 
             // 1) Break expression in to individual parts. 
