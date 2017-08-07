@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Guardian.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
@@ -9,6 +10,9 @@ namespace Guardian
     {
         public static void Requires(Expression<Func<bool>> expression)
         {
+            //var value = Utilities.GetValue(expression);
+            ValidateExpressionVisitor visitor = new ValidateExpressionVisitor();
+            var rewritten = visitor.Visit(expression.Body);
             // TODO: 
             // 1) Break expression in to individual parts. 
             //    example: Guard.Requires(() => argument != null && argument.Length > 10)
