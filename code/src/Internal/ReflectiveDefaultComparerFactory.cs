@@ -14,7 +14,6 @@ namespace Guardian.Internal
         public IComparer GetComparer(Type type)
         {
             return cache.GetOrAdd(type, Build);
-
         }
 
         private static IComparer Build(Type type)

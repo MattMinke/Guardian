@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
-using System.Reflection;
 using System.Collections;
 using System.Linq;
 
@@ -13,22 +12,27 @@ namespace Guardian.Internal
 
         private readonly Stack<object> _state;
         private readonly Stack<object> _errors;
-        bool starting = true;
-        private Expression entryPoint;
-        private readonly IComparerFactory _factory;
+        private readonly Stack<Expression> _traversal;
+        private readonly IComparerFactory _compareFactory;
+        private readonly IGetterFactory _getterFactory;
+        //private Expression entryPoint;
 
-        public ValidateExpressionVisitor(IComparerFactory factory)
+        public ValidateExpressionVisitor(IComparerFactory compareFactory, IGetterFactory getterFactory)
         {
-            _factory = factory;
+            _compareFactory = compareFactory;
+            _getterFactory = getterFactory;
             _state = new Stack<object>();
             _errors = new Stack<object>();
+            _traversal = new Stack<Expression>();
         }
 
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
             _state.Push(node.Value);
-            return base.VisitConstant(node);
+            var expression = base.VisitConstant(node);
+
+            return expression;
         }
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
@@ -51,12 +55,11 @@ namespace Guardian.Internal
 
             var value = node.Method.Invoke(target, parameters);
             _state.Push(value);
-            if (node == entryPoint && !(bool)value)
+            if (object.ReferenceEquals(node, _traversal.Peek()) && !(bool)value)
             {
                 //error
                 _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
-
             return node;
         }
 
@@ -66,21 +69,12 @@ namespace Guardian.Internal
 
             var success = !(bool)_state.Pop();
 
-            if (success)
-            {
-                // the error reported was invalid.
-                if (_errors.Any())
-                {
-                    _errors.Pop();
-                }
-            }
-            else
+            if (!success)
             {
                 //error
                 _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
             _state.Push(success);
-
             return expression;
         }
 
@@ -96,10 +90,9 @@ namespace Guardian.Internal
                 case ExpressionType.ArrayIndex:
                     _state.Push(((Array)left).GetValue((int)right));
                     return expression;
-                    break;
             }
 
-            IComparer comparer = _factory.GetComparer((left ?? right).GetType());
+            IComparer comparer = _compareFactory.GetComparer((left ?? right).GetType());
 
             bool success = false;
             switch (node.NodeType)
@@ -128,94 +121,64 @@ namespace Guardian.Internal
                 case ExpressionType.LessThanOrEqual:
                     success = comparer.Compare(left, right) <= 0;
                     break;
-
-                case ExpressionType.IsFalse:
-                    throw new NotImplementedException();
-                    break;
-                case ExpressionType.IsTrue:
-                    throw new NotImplementedException();
-                    break;
                 default:
-                    throw new NotSupportedException($"The type {node.NodeType} is not supported.");
+                    throw new NotSupportedException($"The node type {node.NodeType} is not supported.");
             }
 
-            if (!success)
+            if (!success && (_traversal.Count < 2 || _traversal.Count >= 2 && _traversal.Skip(1).First().NodeType != ExpressionType.Not && _traversal.Skip(1).First().Type == typeof(bool)))
             {
                 _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
             _state.Push(success);
+
             return expression;
         }
-
-
+        
         protected override Expression VisitMember(MemberExpression node)
         {
-
             var expression = base.VisitMember(node);
 
             var target = _state.Pop();
 
-            object value = null;
-            switch (node.Member.MemberType)
-            {
-                case MemberTypes.Field:
-                    var field = node.Member as FieldInfo;
-                    value = field.GetValue(target);
+            Func<object, object> @delegate = _getterFactory.Create(node.Member);
 
-                    break;
-                case MemberTypes.Property:
-                    var property = node.Member as PropertyInfo;
-                    //TODO: Handle Index.
-                    value = property.GetValue(target);
-                    break;
-                default:
-                    throw new NotSupportedException($"Member of type {node.Member.MemberType} is not supported");
-            }
+            object value = @delegate.Invoke(target);
 
             _state.Push(value);
-
             return expression;
         }
 
-        protected override Expression VisitConditional(ConditionalExpression node)
-        {
-            return base.VisitConditional(node);
-        }
-
-        protected override Expression VisitIndex(IndexExpression node)
-        {
-            return base.VisitIndex(node);
-        }
-
-        protected override Expression VisitParameter(ParameterExpression node)
-        {
-            return base.VisitParameter(node);
-        }
 
         public override Expression Visit(Expression node)
         {
-            bool exiting = false;
-            if (starting)
-            {
-                exiting = true;
-                starting = false;
-                // track the type of node that started this off.
-                entryPoint = node;
-            }
+            _traversal.Push(node);
+          
             var expression = base.Visit(node);
-            if (exiting)
-            {
-                starting = true;
-                entryPoint = null;
-            }
+            
+            _traversal.Pop();
             return expression;
         }
+
         protected override Expression VisitLambda<T>(Expression<T> node)
         {
             _state.Push(((LambdaExpression)node).Compile());
             return node;
         }
 
+        /*
+        
+        protected override Expression VisitConditional(ConditionalExpression node)
+        {
+            return base.VisitConditional(node);
+        }
+        protected override Expression VisitIndex(IndexExpression node)
+        {
+            return base.VisitIndex(node);
+        }
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return base.VisitParameter(node);
+        }
         protected override Expression VisitBlock(BlockExpression node)
         {
             return base.VisitBlock(node);
@@ -312,5 +275,6 @@ namespace Guardian.Internal
         {
             return base.VisitListInit(node);
         }
+        */
     }
 }

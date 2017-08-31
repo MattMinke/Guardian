@@ -14,7 +14,8 @@ namespace Guardian
             //
             //var value = Utilities.GetValue(expression);
             ValidateExpressionVisitor visitor = new ValidateExpressionVisitor(
-                new ReflectiveDefaultComparerFactory()
+                new ReflectiveDefaultComparerFactory(), 
+                new ReflectiveGetterFactory()
             );
             var rewritten = visitor.Visit(expression.Body);
             // TODO: 

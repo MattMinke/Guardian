@@ -20,8 +20,11 @@ namespace Guardian.Test.Unit
             bool toggle = false;
             var inner = new Inner() { Name = name, Age = age };
 
-            Arguments(inner.Name, age, data, list, inner);
-            
+            // Arguments(inner.Name, age, data, list, inner);
+            Guard.Requires(() => name == null);
+
+            Guard.Requires(() => !(age > 20));
+
             Guard.Requires(() => list.All(o => o != null));
 
             Guard.Requires(() => list.All(o => o == null));
@@ -43,9 +46,7 @@ namespace Guardian.Test.Unit
             Guard.Requires(() => toggle && !toggle);
 
             Guard.Requires(() => age >= 21);
-
-            Guard.Requires(() => !(age > 20));
-
+            
             Guard.Requires(() => null != name);
 
             Guard.Requires(() => name != null);
