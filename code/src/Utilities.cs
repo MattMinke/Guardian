@@ -117,7 +117,7 @@ namespace Guardian
 
                 if (memberExpression.Member.MemberType == MemberTypes.Property)
                 {
-                    // TODO: (mminke) Add support for property Indexers
+                    // TODO: Add support for property Indexers
                     return ((PropertyInfo)memberExpression.Member).GetValue(instance, null);
                 }
                 else

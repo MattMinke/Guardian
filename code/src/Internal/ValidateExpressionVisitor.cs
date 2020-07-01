@@ -11,7 +11,7 @@ namespace Guardian.Internal
     {
 
         private readonly Stack<object> _state;
-        private readonly Stack<object> _errors;
+        public readonly Stack<object> _errors;
         private readonly Stack<Expression> _traversal;
         private readonly IComparerFactory _compareFactory;
         private readonly IGetterFactory _getterFactory;
@@ -55,8 +55,9 @@ namespace Guardian.Internal
 
             var value = node.Method.Invoke(target, parameters);
             _state.Push(value);
-            if (object.ReferenceEquals(node, _traversal.Peek()) && !(bool)value)
+            if (_traversal.Count < 2 && object.ReferenceEquals(node, _traversal.Peek()) && !(bool)value)
             {
+                //TODO: Need to think about how to get a meaninful message. 
                 //error
                 _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
@@ -71,6 +72,7 @@ namespace Guardian.Internal
 
             if (!success)
             {
+                //TODO: Need to think about how to get a meaninful message. 
                 //error
                 _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
@@ -127,6 +129,7 @@ namespace Guardian.Internal
 
             if (!success && (_traversal.Count < 2 || _traversal.Count >= 2 && _traversal.Skip(1).First().NodeType != ExpressionType.Not && _traversal.Skip(1).First().Type == typeof(bool)))
             {
+                //TODO: Need to think about how to get a meaninful message. 
                 _errors.Push("TODO: create a error object that can be used to create a message from later.");
             }
             _state.Push(success);

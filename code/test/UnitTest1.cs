@@ -21,81 +21,127 @@ namespace Guardian.Test.Unit
             var inner = new Inner() { Name = name, Age = age };
 
             // Arguments(inner.Name, age, data, list, inner);
-            Guard.Requires(() => name == null);
 
-            Guard.Requires(() => !(age > 20));
+            Assert.Throws<Exception>(() => 
+                Ensure.That(() => name == null)
+            );
 
-            Guard.Requires(() => list.All(o => o != null));
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => !(age > 50))
+            );
 
-            Guard.Requires(() => list.All(o => o == null));
+            Assert.DoesNotThrow(() =>
+                Ensure.That(() => list.All(o => o != null))
+            );
 
-            Guard.Requires(() => Enumerable.All(list, o => o != null));
+            Assert.Throws<Exception>(() =>
+                Ensure.That(() => list.All(o => o == null))
+            );
+            
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => !list.Any(o => o == null))
+            );
 
-            Guard.Requires(() => !Enumerable.Any(list, o => o == null));
+            Assert.DoesNotThrow(() =>
+                Ensure.That(() => Enumerable.All(list, o => o != null))
+            );
+            
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => !Enumerable.Any(list, o => o == null))
+            );
 
-            Guard.Requires(() => list[0].Length > 1);
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => list[0].Length > 1)
+            );
+            
+            Assert.Throws<Exception>(() =>
+                Ensure.That(() => String.IsNullOrWhiteSpace(name))
+            ); 
+            
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => !String.IsNullOrWhiteSpace(name))
+            );
 
-            Guard.Requires(() => !String.IsNullOrEmpty(name));
+            Assert.DoesNotThrow(() =>
+                Ensure.That(() => data[0].Length > 1)
+            );
 
-            Guard.Requires(() => !String.IsNullOrWhiteSpace(name));
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => name != null && age > 19 && age < 120)
+            );
 
-            Guard.Requires(() => data[0].Length > 1);
+            Assert.Throws<Exception>(() => 
+                Ensure.That(() => toggle && !toggle)
+            );
 
-            Guard.Requires(() => name != null && age > 19 && age < 120);
+            Assert.Throws<Exception>(() => 
+                Ensure.That(() => age >= 21)
+            );
 
-            Guard.Requires(() => toggle && !toggle);
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => null != name)
+            );
 
-            Guard.Requires(() => age >= 21);
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => name != null)
+            );
 
-            Guard.Requires(() => null != name);
+            Assert.Throws<Exception>(() => 
+                Ensure.That(() => name == null && (age > 20 || age < 20))
+            );
 
-            Guard.Requires(() => name != null);
+            Assert.Throws<Exception>(() =>
+                Ensure.That(() => (age > 20 || age < 20) && name == null)
+            );
 
-            Guard.Requires(() => name == null && (age > 20 || age < 20));
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => inner.Age > 1)
+            );
 
-            Guard.Requires(() => inner.Age > 1);
+            Assert.DoesNotThrow(() => 
+                Ensure.That(() => inner[1] != "Something")
+            );
 
-            Guard.Requires(() => inner[1] != "Something");
-
-            Guard.Requires(() => !string.IsNullOrWhiteSpace(inner.Name));
-
+            Assert.DoesNotThrow(() =>
+                Ensure.That(() => !string.IsNullOrWhiteSpace(inner.Name))
+            );
         }
 
         private static void Arguments(string name, int age, string[] data, List<string> list, Inner inner, int defaultValue = 21)
         {
-            Guard.Requires(() => list.All(o => o != null));
+            Ensure.That(() => list.All(o => o != null));
 
-            Guard.Requires(() => list.All(o => o == null));
+            Ensure.That(() => list.All(o => o == null));
 
-            Guard.Requires(() => Enumerable.All(list, o => o != null));
+            Ensure.That(() => Enumerable.All(list, o => o != null));
 
-            Guard.Requires(() => !Enumerable.Any(list, o => o == null));
+            Ensure.That(() => !Enumerable.Any(list, o => o == null));
 
-            Guard.Requires(() => list[0].Length > 1);
+            Ensure.That(() => list[0].Length > 1);
 
-            Guard.Requires(() => !String.IsNullOrEmpty(name));
+            Ensure.That(() => !String.IsNullOrEmpty(name));
 
-            Guard.Requires(() => !String.IsNullOrWhiteSpace(name));
+            Ensure.That(() => !String.IsNullOrWhiteSpace(name));
 
-            Guard.Requires(() => data[0].Length > 1);
+            Ensure.That(() => data[0].Length > 1);
 
-            Guard.Requires(() => name != null && age > 19 && age < 120);
+            Ensure.That(() => name != null && age > 19 && age < 120);
 
-            Guard.Requires(() => age >= defaultValue);
+            Ensure.That(() => age >= defaultValue);
 
-            Guard.Requires(() => !(age > 20));
+            Ensure.That(() => !(age > 20));
 
-            Guard.Requires(() => null != name);
+            Ensure.That(() => null != name);
 
-            Guard.Requires(() => name != null);
+            Ensure.That(() => name != null);
 
-            Guard.Requires(() => name == null && (age > 20 || age < 20));
+            Ensure.That(() => name == null && (age > 20 || age < 20));
 
-            Guard.Requires(() => inner.Age > 1);
+            Ensure.That(() => inner.Age > 1);
 
-            Guard.Requires(() => inner[1] != "Something");
+            Ensure.That(() => inner[1] != "Something");
 
-            Guard.Requires(() => !string.IsNullOrWhiteSpace(inner.Name));
+            Ensure.That(() => !string.IsNullOrWhiteSpace(inner.Name));
         }
 
         private class Inner
