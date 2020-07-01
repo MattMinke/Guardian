@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using Xunit;
+using NUnit.Framework;
 
 namespace Guardian.Test.Unit
 {
     public class UnitTest1
     {
-        [Fact]
+        [Test]
         public void Test1()
         {
             string name = "kevin";
@@ -46,7 +46,7 @@ namespace Guardian.Test.Unit
             Guard.Requires(() => toggle && !toggle);
 
             Guard.Requires(() => age >= 21);
-            
+
             Guard.Requires(() => null != name);
 
             Guard.Requires(() => name != null);
@@ -58,7 +58,7 @@ namespace Guardian.Test.Unit
             Guard.Requires(() => inner[1] != "Something");
 
             Guard.Requires(() => !string.IsNullOrWhiteSpace(inner.Name));
-            
+
         }
 
         private static void Arguments(string name, int age, string[] data, List<string> list, Inner inner, int defaultValue = 21)
@@ -111,7 +111,7 @@ namespace Guardian.Test.Unit
 
             public string this[int index]
             {
-                get { return indexer[index];  }
+                get { return indexer[index]; }
                 set { indexer[index] = value; }
             }
         }
